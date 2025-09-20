@@ -1,0 +1,7 @@
+services:
+  - type: web
+    name: abbeybackend
+    env: node
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    plan: free # or standard depending on your Render plan
