@@ -1,0 +1,140 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  // output   = "./src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  name         String?
+  userCount    Int      @default(autoincrement())
+  email        String   @unique
+  password     String
+  bio          String?
+  headline     String?
+  profilePhoto String?
+  coverPhoto   String?
+  location     String?
+  skills       String[]
+
+  sessions      Session[]
+  followers     Follower[]     @relation("followers")
+  following     Follower[]     @relation("following")
+  connections   Connection[]   @relation("userConnections")
+  posts         Post[]
+  comments      Comment[]
+  likes         Like[]
+  notifications Notification[] @relation("userNotifications")
+
+  createdAt    DateTime       @default(now())
+  Notification Notification[]
+  Connection   Connection[]
+}
+
+model Post {
+  id           String         @id @default(cuid())
+  author       User           @relation(fields: [authorId], references: [id])
+  authorId     String
+  content      String
+  media        String[]
+  likes        Like[]
+  comments     Comment[]
+  createdAt    DateTime       @default(now())
+  Notification Notification[]
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  post      Post     @relation(fields: [postId], references: [id])
+  postId    String
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String
+  text      String
+  createdAt DateTime @default(now())
+
+  @@unique([userId, postId])
+}
+
+model Like {
+  id        String   @id @default(cuid())
+  post      Post     @relation(fields: [postId], references: [id])
+  postId    String
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String
+  createdAt DateTime @default(now())
+
+  @@unique([userId, postId], name: "userId_postId")
+}
+
+model Notification {
+  id          String           @id @default(cuid())
+  recipient   User             @relation("userNotifications", fields: [recipientId], references: [id])
+  recipientId String
+  sender      User?            @relation(fields: [senderId], references: [id])
+  senderId    String?
+  type        NotificationType
+  post        Post?            @relation(fields: [postId], references: [id])
+  postId      String?
+  seen        Boolean          @default(false)
+  createdAt   DateTime         @default(now())
+}
+
+model Connection {
+  id        String           @id @default(cuid())
+  user      User             @relation("userConnections", fields: [userId], references: [id])
+  userId    String
+  target    User             @relation(fields: [targetId], references: [id])
+  targetId  String
+  status    ConnectionStatus @default(PENDING)
+  createdAt DateTime         @default(now())
+
+  @@unique([userId, targetId], name: "userId_targetId")
+}
+
+model Follower {
+  id          String   @id @default(cuid())
+  follower    User     @relation("followers", fields: [followerId], references: [id])
+  followerId  String
+  following   User     @relation("following", fields: [followingId], references: [id])
+  followingId String
+  createdAt   DateTime @default(now())
+
+  @@unique([followerId, followingId], name: "followerId_followingId")
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String
+  token     String   @unique
+  userAgent String?
+  ip        String?
+  revoked   Boolean  @default(false)
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+}
+
+enum ConnectionStatus {
+  PENDING
+  CONNECTED
+}
+
+enum NotificationType {
+  LIKE
+  COMMENT
+  FOLLOW
+  UNFOLLOW
+  FRIEND_REQUEST
+  REQUEST_ACCEPTED
+  REQUEST_REJECTED
+}

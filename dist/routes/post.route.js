@@ -1,0 +1,12 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const post_controller_1 = require("../controllers/post.controller");
+const authMiddleware_1 = require("../middlewares/authMiddleware");
+const router = (0, express_1.Router)();
+router.post("/", authMiddleware_1.requireAuth, post_controller_1.createPost);
+router.get("/feed", authMiddleware_1.requireAuth, post_controller_1.getFeed);
+router.get("/my-feed", authMiddleware_1.requireAuth, post_controller_1.getMyFeed);
+router.post("/like", authMiddleware_1.requireAuth, post_controller_1.likePost);
+router.post("/comment/:postId", authMiddleware_1.requireAuth, post_controller_1.commentPost);
+exports.default = router;
